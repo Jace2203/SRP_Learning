@@ -1,16 +1,16 @@
+using UnityEditor;
 using UnityEngine;
+using UnityEditor.Profiling;
 using UnityEngine.Rendering;
+using UnityEngine.Profiling;
 
-public class CameraRenderer
+public partial class CameraRenderer
 {
-    private const string BUFFER_NAME = "Render Camera";
-    private static ShaderTagId unlitShaderTagId = new ShaderTagId("SRPDefaultUnlit");
-    private static Material errorMaterial;
-
-    private CommandBuffer buffer = new CommandBuffer()
+#if UNITY_EDITOR
+    private string SampleName
     {
-        name = BUFFER_NAME,
-    };
+        get; set;
+    }
 
     private static ShaderTagId[] legacyShaderTagIds =
     {
@@ -22,6 +22,19 @@ public class CameraRenderer
         new ShaderTagId("VertexLM"),
     };
 
+    private static Material errorMaterial;
+#else
+    private const string SampleName = BUFFER_NAME;
+#endif
+
+    private const string BUFFER_NAME = "Render Camera";
+    private static ShaderTagId unlitShaderTagId = new ShaderTagId("SRPDefaultUnlit");
+
+    private CommandBuffer buffer = new CommandBuffer()
+    {
+        name = BUFFER_NAME,
+    };
+
     private ScriptableRenderContext context;
     private CullingResults cullingResults;
     private Camera camera;
@@ -31,19 +44,28 @@ public class CameraRenderer
         this.context = context;
         this.camera = camera;
 
+        PrepareBuffer();
+        PrepareForSceneWindow();
         if (!Cull()) return;
 
         Setup();
         DrawVisibleGeometry();
         DrawUnsupportedShaders();
+        DrawGizmos();
         Submit();
     }
 
     private void Setup()
     {
         context.SetupCameraProperties(camera);
-        buffer.ClearRenderTarget(true, true, Color.clear);
-        buffer.BeginSample(BUFFER_NAME);
+        CameraClearFlags flags = camera.clearFlags;
+        buffer.ClearRenderTarget(
+            flags <= CameraClearFlags.Depth,
+            flags == CameraClearFlags.Color,
+            flags == CameraClearFlags.Color ?
+                camera.backgroundColor.linear :
+                Color.clear);
+        buffer.BeginSample(SampleName);
         ExecuteBuffer();
     }
 
@@ -67,7 +89,23 @@ public class CameraRenderer
         context.DrawRenderers(cullingResults, ref drawingSettings, ref filteringSettings);
     }
 
-    private void DrawUnsupportedShaders()
+
+    private partial void DrawGizmos();
+    private partial void DrawUnsupportedShaders();
+    private partial void PrepareForSceneWindow();
+    private partial void PrepareBuffer();
+
+#if UNITY_EDITOR
+    private partial void DrawGizmos()
+    {
+        if (Handles.ShouldRenderGizmos())
+        {
+            context.DrawGizmos(camera, GizmoSubset.PreImageEffects);
+            context.DrawGizmos(camera, GizmoSubset.PostImageEffects);
+        }
+    }
+
+    private partial void DrawUnsupportedShaders()
     {
         if (errorMaterial == null) errorMaterial = new Material(Shader.Find("Hidden/InternalErrorShader"));
 
@@ -85,9 +123,25 @@ public class CameraRenderer
         context.DrawRenderers(cullingResults, ref drawingSettings, ref filteringSettings);
     }
 
+    private partial void PrepareForSceneWindow()
+    {
+        if (camera.cameraType == CameraType.SceneView)
+        {
+            ScriptableRenderContext.EmitWorldGeometryForSceneView(camera);
+        }
+    }
+
+    private partial void PrepareBuffer()
+    {
+        Profiler.BeginSample("Editor Only");
+        buffer.name = SampleName = camera.name;
+        Profiler.EndSample();
+    }
+#endif
+
     private void Submit()
     {
-        buffer.EndSample(BUFFER_NAME);
+        buffer.EndSample(SampleName);
         ExecuteBuffer();
         context.Submit();
     }
