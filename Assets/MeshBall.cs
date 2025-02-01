@@ -4,9 +4,9 @@ using UnityEngine;
 
 public class MeshBall : MonoBehaviour
 {
-    private const int NUM = 1024;
+    private const int NUM = 128;
 
-    private static int baseColorId = Shader.PropertyToID("_BaseColor");
+    private static int baseColorId  = Shader.PropertyToID("_BaseColor");
 
     [SerializeField]
     private Mesh mesh = default;
@@ -24,7 +24,7 @@ public class MeshBall : MonoBehaviour
         for (int i = 0; i < NUM; i++)
         {
             matrices[i] = Matrix4x4.TRS(
-                Random.insideUnitSphere * 10f,
+                Random.insideUnitCircle * 3f,
                 Quaternion.identity,
                 Vector3.one
             );
