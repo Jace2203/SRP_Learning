@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class MeshBall : MonoBehaviour
 {
-    private const int NUM = 128;
+    private const int NUM = 1023;
 
     private static int baseColorId  = Shader.PropertyToID("_BaseColor");
 
@@ -24,11 +24,15 @@ public class MeshBall : MonoBehaviour
         for (int i = 0; i < NUM; i++)
         {
             matrices[i] = Matrix4x4.TRS(
-                Random.insideUnitCircle * 3f,
+                Random.onUnitSphere * 3f,
                 Quaternion.identity,
                 Vector3.one
             );
-            baseColors[i] = new Vector4(Random.value, Random.value, Random.value, 1f);
+            baseColors[i] = new Vector4(
+                Random.value,
+                Random.value,
+                Random.value,
+                Random.Range(0.5f, 1f));
         }
     }
 
