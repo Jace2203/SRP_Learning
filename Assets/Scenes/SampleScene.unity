@@ -2836,7 +2836,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
-  material: {fileID: 2100000, guid: 216651f092d1c4c40ae0845fab924744, type: 2}
+  material: {fileID: 2100000, guid: 41cc4e2bd195b9947b8c93e8bfc62156, type: 2}
 --- !u!4 &682610804
 Transform:
   m_ObjectHideFlags: 0

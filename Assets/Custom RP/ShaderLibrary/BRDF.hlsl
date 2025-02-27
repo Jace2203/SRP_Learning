@@ -32,7 +32,7 @@ float3 DirectBRDF (Surface surface, BRDF brdf, Light light)
 	return SpecularStrength(surface, brdf, light) * brdf.specular + brdf.diffuse;
 }
 
-BRDF GetBRDF(Surface surface)
+BRDF GetBRDF(inout Surface surface, bool applyAlphaToDiffuse = false)
 {
     BRDF brdf;
 
@@ -40,6 +40,10 @@ BRDF GetBRDF(Surface surface)
     float perceptualRoughness = PerceptualSmoothnessToPerceptualRoughness(surface.smoothness);
 
     brdf.diffuse = surface.color * oneMinusReflectivity;
+    if (applyAlphaToDiffuse)
+    {
+        brdf.diffuse *= surface.alpha;
+    }
     brdf.specular = lerp(MIN_REFLECTIVITY, surface.color, surface.metallic);
     brdf.roughness = PerceptualRoughnessToRoughness(perceptualRoughness);
     return brdf;
