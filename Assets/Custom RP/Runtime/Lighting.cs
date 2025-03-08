@@ -11,11 +11,13 @@ public class Lighting
     private static int
         dirLightCountId = Shader.PropertyToID("_DirectionalLightCount"),
         dirLightColorsId = Shader.PropertyToID("_DirectionalLightColors"),
-        dirLightDirectionsId = Shader.PropertyToID("_DirectionalLightDirections");
+        dirLightDirectionsId = Shader.PropertyToID("_DirectionalLightDirections"),
+        dirLightShadowDataId = Shader.PropertyToID("_DirectionalLightShadowData");
 
     private static Vector4[]
         dirLightColors = new Vector4[MAX_DIR_LIGHT_COUNT],
-        dirLightDirections = new Vector4[MAX_DIR_LIGHT_COUNT];
+        dirLightDirections = new Vector4[MAX_DIR_LIGHT_COUNT],
+        dirLightShadowData = new Vector4[MAX_DIR_LIGHT_COUNT];
 
     private CullingResults cullingResults;
     private Shadows shadows = new Shadows();        
@@ -42,13 +44,6 @@ public class Lighting
         shadows.Cleanup();
     }
 
-    private void SetupDirectionalLight(int index, ref VisibleLight visibleLight)
-    {
-        dirLightColors[index] = visibleLight.finalColor;
-        dirLightDirections[index] = -visibleLight.localToWorldMatrix.GetColumn(2);
-        shadows.ReserveDirectionalShadows(visibleLight.light, index);
-    }
-
     private void SetupLights()
     {
         NativeArray<VisibleLight> visibleLights = cullingResults.visibleLights;
@@ -71,5 +66,13 @@ public class Lighting
         buffer.SetGlobalInt(dirLightCountId, dirLightCount);
         buffer.SetGlobalVectorArray(dirLightColorsId, dirLightColors);
         buffer.SetGlobalVectorArray(dirLightDirectionsId, dirLightDirections);
+        buffer.SetGlobalVectorArray(dirLightShadowDataId, dirLightShadowData);
+    }
+    
+    private void SetupDirectionalLight(int index, ref VisibleLight visibleLight)
+    {
+        dirLightColors[index] = visibleLight.finalColor;
+        dirLightDirections[index] = -visibleLight.localToWorldMatrix.GetColumn(2);
+        dirLightShadowData[index] = shadows.ReserveDirectionalShadows(visibleLight.light, index);
     }
 }
